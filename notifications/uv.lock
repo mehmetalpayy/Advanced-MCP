@@ -186,12 +186,16 @@ source = { editable = "." }
 dependencies = [
     { name = "aioconsole" },
     { name = "mcp", extra = ["cli"] },
+    { name = "python-dotenv" },
+    { name = "rich" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "aioconsole", specifier = ">=0.8.1" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.9.3" },
+    { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "rich", specifier = ">=14.0.0" },
 ]
 
 [[package]]

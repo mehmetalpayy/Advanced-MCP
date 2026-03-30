@@ -4,6 +4,12 @@ A demonstration of the Model Context Protocol using a STDIO transport.
 
 ## Setup
 
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
 Install dependencies using uv:
 
 ```bash
@@ -15,5 +21,5 @@ uv sync
 Run the MCP client:
 
 ```bash
-uv run client.py
+make notifications-client
 ```
