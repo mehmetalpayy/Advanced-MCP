@@ -1,10 +1,8 @@
 from typing import List
 from mcp.types import Prompt, PromptMessage
-from anthropic.types import MessageParam
 
-from core.chat import Chat
-from core.claude import Claude
-from mcp_client import MCPClient
+from roots.core.chat import Chat
+from roots.mcp_client import MCPClient
 
 
 class CliChat(Chat):
@@ -12,9 +10,9 @@ class CliChat(Chat):
         self,
         doc_client: MCPClient,
         clients: dict[str, MCPClient],
-        claude_service: Claude,
+        llm_service,
     ):
-        super().__init__(clients=clients, claude_service=claude_service)
+        super().__init__(clients=clients, llm_service=llm_service)
 
         self.doc_client: MCPClient = doc_client
 
@@ -32,7 +30,7 @@ class CliChat(Chat):
 
 def convert_prompt_message_to_message_param(
     prompt_message: "PromptMessage",
-) -> MessageParam:
+) -> dict:
     role = "user" if prompt_message.role == "user" else "assistant"
 
     content = prompt_message.content
@@ -78,7 +76,7 @@ def convert_prompt_message_to_message_param(
 
 def convert_prompt_messages_to_message_params(
     prompt_messages: List[PromptMessage],
-) -> List[MessageParam]:
+) -> List[dict]:
     return [
         convert_prompt_message_to_message_param(msg) for msg in prompt_messages
     ]

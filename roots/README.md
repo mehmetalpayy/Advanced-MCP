@@ -1,11 +1,11 @@
 # MCP Chat with File System Access
 
-MCP Chat is a command-line interface application that enables interactive chat capabilities with AI models through the Anthropic API. The application supports file system operations with controlled access to specified directories, video conversion capabilities, and extensible tool integrations via the MCP (Model Control Protocol) architecture.
+MCP Chat is a command-line interface application that enables interactive chat capabilities with AI models through the OpenAI API. The application supports file system operations with controlled access to specified directories, video conversion capabilities, and extensible tool integrations via the MCP (Model Context Protocol) architecture.
 
 ## Prerequisites
 
 - Python 3.10+
-- Anthropic API Key
+- OpenAI API Key
 - FFmpeg (for video conversion features)
 
 ## Setup
@@ -27,47 +27,30 @@ cp .env.example .env
 2. Edit the `.env` file and set your environment variables:
 
 ```
-CLAUDE_MODEL="claude-sonnet-4-0"  # Or your preferred Claude model
-ANTHROPIC_API_KEY=""  # Enter your Anthropic API secret key
+OPENAI_MODEL="gpt-5.4"  # Or your preferred OpenAI model
+OPENAI_API_KEY=""  # Enter your OpenAI API key
 ```
 
-### Step 2: Install dependencies
+### Step 2: Run the project
 
-#### Setup with uv
-
-[uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver.
-
-1. Install uv, if not already installed:
-
-```bash
-pip install uv
-```
-
-2. Install dependencies:
-
-```bash
-uv sync
-```
-
-3. Run the project
+This repo uses `uv` and the root `Makefile`.
 
 When running the project, you must specify one or more root directories that the MCP server will have access to. Only files and directories within these roots can be accessed by the server.
 
+From the repository root:
+
 ```bash
-uv run main.py <root1> [root2] [root3] ...
+make roots-main ROOTS='.'
 ```
 
 Examples:
 
 ```bash
 # Single directory
-uv run main.py /path/to/videos
+make roots-main ROOTS='/path/to/videos'
 
 # Multiple directories
-uv run main.py /home/user/videos /mnt/storage/media ~/Documents
-
-# Current directory
-uv run main.py .
+make roots-main ROOTS='/home/user/videos /mnt/storage/media ~/Documents'
 ```
 
 ## Features
@@ -80,6 +63,7 @@ The server can only access files and directories within the specified root paths
 
 - **list_roots**: List all accessible root directories
 - **read_dir**: Read contents of a directory (must be within a root)
+- **read_file**: Read a text file (must be within a root)
 - **convert_video**: Convert MP4 videos to other formats (avi, mov, webm, mkv, gif)
 
 ### Video Conversion

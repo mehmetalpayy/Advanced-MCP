@@ -1,57 +1,64 @@
 import asyncio
 import sys
 import os
-from dotenv import load_dotenv
 from contextlib import AsyncExitStack
+from dotenv import load_dotenv
 
-from mcp_client import MCPClient
-from core.claude import Claude
-
-from core.cli_chat import CliChat
-from core.cli import CliApp
+from utils import Logger
+from roots.mcp_client import MCPClient
+from roots.core.openai import OpenAI
+from roots.core.cli_chat import CliChat
+from roots.core.cli import CliApp
 
 load_dotenv()
 
-# Anthropic Config
-claude_model = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-0")
-anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "")
-
-
-assert claude_model, "Error: CLAUDE_MODEL cannot be empty. Update .env"
-assert anthropic_api_key, (
-    "Error: ANTHROPIC_API_KEY cannot be empty. Update .env"
-)
+# OpenAI Config
+openai_model = os.getenv("OPENAI_MODEL", "gpt-5.4")
+openai_api_key = os.getenv("OPENAI_API_KEY", "")
 
 
 async def main():
-    claude_service = Claude(model=claude_model)
+    Logger.info("[ROOTS] Starting roots application")
+    Logger.info(f"[ROOTS] Configured OpenAI model: {openai_model}")
+
+    llm_service = OpenAI(model=openai_model)
 
     # Get root directories from command line arguments
     root_paths = sys.argv[1:]
     if not root_paths:
-        print("Usage: uv run main.py <root1> [root2] ...")
-        print("Example: uv run main.py /path/to/videos /another/path")
+        Logger.error("[ROOTS] No root directories were provided")
+        print("Usage: uv run --project roots -m roots.main <root1> [root2] ...")
+        print(
+            "Example: uv run --project roots -m roots.main /path/to/videos /another/path"
+        )
         sys.exit(1)
 
+    Logger.info(f"[ROOTS] Root directories: {root_paths}")
     clients = {}
 
     async with AsyncExitStack() as stack:
         # Create the MCP client with the provided root directories
+        Logger.info("[ROOTS] Connecting to local MCP server")
         doc_client = await stack.enter_async_context(
             MCPClient(
-                command="uv", args=["run", "mcp_server.py"], roots=root_paths
+                command="uv",
+                args=["run", "--project", "roots", "-m", "roots.mcp_server"],
+                roots=root_paths,
             )
         )
         clients["doc_client"] = doc_client
+        Logger.info("[ROOTS] MCP client connected")
 
         chat = CliChat(
             doc_client=doc_client,
             clients=clients,
-            claude_service=claude_service,
+            llm_service=llm_service,
         )
 
         cli = CliApp(chat)
+        Logger.info("[ROOTS] Initializing CLI")
         await cli.initialize()
+        Logger.info("[ROOTS] Entering interactive chat loop")
         await cli.run()
 
 

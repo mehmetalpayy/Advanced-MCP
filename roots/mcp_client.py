@@ -1,13 +1,14 @@
 from typing import Optional, Any
 from contextlib import AsyncExitStack
+from pathlib import Path
+import json
+
+from utils import Logger
 from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 from mcp.types import Root, ListRootsResult, ErrorData
 from mcp.shared.context import RequestContext
-from pathlib import Path
 from pydantic import FileUrl
-
-import json
 from pydantic import AnyUrl
 
 
@@ -33,15 +34,20 @@ class MCPClient:
             p = Path(path).resolve()
             file_url = FileUrl(f"file://{p}")
             roots.append(Root(uri=file_url, name=p.name or "Root"))
+            Logger.info(f"[MCP-CLIENT] Registered root: {p}")
         return roots
 
     async def _handle_list_roots(
         self, context: RequestContext["ClientSession", None]
     ) -> ListRootsResult | ErrorData:
         """Callback for when server requests roots."""
+        Logger.info("[MCP-CLIENT] Server requested available roots")
         return ListRootsResult(roots=self._roots)
 
     async def connect(self):
+        Logger.info(
+            f"[MCP-CLIENT] Spawning server command: {self._command} {' '.join(self._args)}"
+        )
         server_params = StdioServerParameters(
             command=self._command,
             args=self._args,
@@ -61,6 +67,7 @@ class MCPClient:
             )
         )
         await self._session.initialize()
+        Logger.info("[MCP-CLIENT] Session initialized")
 
     def session(self) -> ClientSession:
         if self._session is None:
@@ -76,17 +83,25 @@ class MCPClient:
     async def call_tool(
         self, tool_name: str, tool_input
     ) -> types.CallToolResult | None:
+        Logger.info(
+            f"[MCP-CLIENT] Calling tool '{tool_name}' with input: {tool_input}"
+        )
         return await self.session().call_tool(tool_name, tool_input)
 
     async def list_prompts(self) -> list[types.Prompt]:
+        Logger.info("[MCP-CLIENT] Listing prompts")
         result = await self.session().list_prompts()
         return result.prompts
 
     async def get_prompt(self, prompt_name, args: dict[str, str]):
+        Logger.info(
+            f"[MCP-CLIENT] Fetching prompt '{prompt_name}' with args: {args}"
+        )
         result = await self.session().get_prompt(prompt_name, args)
         return result.messages
 
     async def read_resource(self, uri: str) -> Any:
+        Logger.info(f"[MCP-CLIENT] Reading resource: {uri}")
         result = await self.session().read_resource(AnyUrl(uri))
         resource = result.contents[0]
 
@@ -97,6 +112,7 @@ class MCPClient:
             return resource.text
 
     async def cleanup(self):
+        Logger.info("[MCP-CLIENT] Cleaning up session")
         await self._exit_stack.aclose()
         self._session = None
 

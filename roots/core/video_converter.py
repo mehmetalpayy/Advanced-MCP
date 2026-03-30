@@ -2,6 +2,8 @@ import os
 import asyncio
 from pathlib import Path
 
+from utils import Logger
+
 
 class VideoConverter:
     """Handles video conversion operations using ffmpeg."""
@@ -18,6 +20,7 @@ class VideoConverter:
     @classmethod
     def validate_input(cls, input_path: str) -> Path:
         """Validate the input file exists and is an MP4."""
+        Logger.info(f"[VIDEO] Validating input file: {input_path}")
         input_file = Path(input_path)
         
         if not input_file.exists():
@@ -75,9 +78,11 @@ class VideoConverter:
         
         # Generate output path
         output_path = cls.generate_output_path(input_path, format)
-        
+        Logger.info(f"[VIDEO] Output path resolved to: {output_path}")
+
         # Build ffmpeg command
         cmd = cls.build_ffmpeg_command(input_path, output_path, format)
+        Logger.info(f"[VIDEO] Running ffmpeg for format: {format}")
         
         try:
             # Run ffmpeg asynchronously
@@ -91,6 +96,7 @@ class VideoConverter:
             if process.returncode != 0:
                 raise RuntimeError(f"FFmpeg conversion failed: {stderr.decode()}")
                 
+            Logger.info("[VIDEO] FFmpeg conversion completed successfully")
             return f"Successfully converted {input_path} to {output_path}"
             
         except FileNotFoundError:

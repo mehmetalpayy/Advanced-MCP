@@ -1,8 +1,9 @@
 import json
-from typing import Optional, Literal, List
+from typing import Any, Optional, Literal, List
+
+from utils import Logger
 from mcp.types import CallToolResult, Tool, TextContent
-from mcp_client import MCPClient
-from anthropic.types import Message, ToolResultBlockParam
+from roots.mcp_client import MCPClient
 
 
 class ToolManager:
@@ -20,6 +21,7 @@ class ToolManager:
                 }
                 for t in tool_models
             ]
+        Logger.info(f"[TOOLS] Loaded {len(tools)} tool definition(s)")
         return tools
 
     @classmethod
@@ -40,7 +42,7 @@ class ToolManager:
         tool_use_id: str,
         text: str,
         status: Literal["success"] | Literal["error"],
-    ) -> ToolResultBlockParam:
+    ) -> dict:
         """Builds a tool result part dictionary."""
         return {
             "tool_use_id": tool_use_id,
@@ -51,23 +53,29 @@ class ToolManager:
 
     @classmethod
     async def execute_tool_requests(
-        cls, clients: dict[str, MCPClient], message: Message
-    ) -> List[ToolResultBlockParam]:
+        cls, clients: dict[str, MCPClient], message: Any
+    ) -> List[dict]:
         """Executes a list of tool requests against the provided clients."""
         tool_requests = [
             block for block in message.content if block.type == "tool_use"
         ]
-        tool_result_blocks: list[ToolResultBlockParam] = []
+        tool_result_blocks: list[dict] = []
         for tool_request in tool_requests:
             tool_use_id = tool_request.id
             tool_name = tool_request.name
             tool_input = tool_request.input
+            Logger.info(
+                f"[TOOLS] Executing tool request '{tool_name}' with input: {tool_input}"
+            )
 
             client = await cls._find_client_with_tool(
                 list(clients.values()), tool_name
             )
 
             if not client:
+                Logger.warn(
+                    f"[TOOLS] No client found for tool '{tool_name}'"
+                )
                 tool_result_part = cls._build_tool_result_part(
                     tool_use_id, "Could not find that tool", "error"
                 )
@@ -93,9 +101,13 @@ class ToolManager:
                     if tool_output and tool_output.isError
                     else "success",
                 )
+                Logger.info(
+                    f"[TOOLS] Tool '{tool_name}' completed with status="
+                    f"{'error' if tool_output and tool_output.isError else 'success'}"
+                )
             except Exception as e:
                 error_message = f"Error executing tool '{tool_name}': {e}"
-                print(error_message)
+                Logger.error(f"[TOOLS] {error_message}")
                 tool_result_part = cls._build_tool_result_part(
                     tool_use_id,
                     json.dumps({"error": error_message}),

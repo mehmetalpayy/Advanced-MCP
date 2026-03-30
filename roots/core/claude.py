@@ -1,6 +1,8 @@
 from anthropic import AsyncAnthropic
 from anthropic.types import Message
 
+from utils import Logger
+
 
 class Claude:
     def __init__(self, model: str):
@@ -40,6 +42,7 @@ class Claude:
         thinking=False,
         thinking_budget=1024,
     ) -> Message:
+        Logger.info("[CLAUDE] Sending request to Anthropic")
         params = {
             "model": self.model,
             "max_tokens": 8000,
@@ -61,6 +64,9 @@ class Claude:
             params["system"] = system
 
         message = await self.client.messages.create(**params)
+        Logger.info(
+            f"[CLAUDE] Anthropic response received with stop_reason={message.stop_reason}"
+        )
         return message
 
     async def chat_stream(
@@ -74,6 +80,7 @@ class Claude:
         thinking_budget=1024,
         on_event=None,
     ) -> Message:
+        Logger.info("[CLAUDE] Starting streaming request to Anthropic")
         params = {
             "model": self.model,
             "max_tokens": 8000,
@@ -102,4 +109,8 @@ class Claude:
                 async for event in stream:
                     pass
 
-        return await stream.get_final_message()
+        message = await stream.get_final_message()
+        Logger.info(
+            f"[CLAUDE] Streaming response completed with stop_reason={message.stop_reason}"
+        )
+        return message

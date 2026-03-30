@@ -1,9 +1,11 @@
 from prompt_toolkit import PromptSession
 from prompt_toolkit.styles import Style
 from prompt_toolkit.history import InMemoryHistory
-from core.cli_chat import CliChat
 import json
 from pyboxen import boxen
+
+from utils import Logger
+from roots.core.cli_chat import CliChat
 
 
 class CliApp:
@@ -24,7 +26,7 @@ class CliApp:
         )
 
     async def initialize(self):
-        pass
+        Logger.info("[CLI] CLI initialized")
 
     async def run(self):
         while True:
@@ -33,6 +35,7 @@ class CliApp:
                 if not user_input.strip():
                     continue
 
+                Logger.info("[CLI] User submitted a prompt")
                 print()
 
                 tool_calls = {}
@@ -110,4 +113,5 @@ class CliApp:
                 print()  # Add newline after everything
 
             except KeyboardInterrupt:
+                Logger.info("[CLI] Keyboard interrupt received, exiting")
                 break
