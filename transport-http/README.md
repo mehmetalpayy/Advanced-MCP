@@ -1,5 +1,11 @@
 ## Setup
 
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
 Install dependencies using uv:
 
 ```bash
@@ -11,5 +17,5 @@ uv sync
 Run the MCP server:
 
 ```bash
-uv run main.py
+make transport-http-server
 ```
